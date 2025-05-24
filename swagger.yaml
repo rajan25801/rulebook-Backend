@@ -1,0 +1,802 @@
+openapi: 3.0.0
+info:
+  title: Rule Book API
+  description: API for managing business rules with versioning and event tracking
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3002
+    description: Development server
+
+paths:
+  /rule-engine/api/v1/groups/{rule_group_id}/rules:
+    get:
+      summary: Get rules with pagination, search and version filtering
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: version
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+    
+    post:
+      summary: Create new rule
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleCreate'
+      responses:
+        201:
+          description: Rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleCreateResponse'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/{rule_id}/update:
+    put:
+      summary: Update existing rule
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdate'
+      responses:
+        200:
+          description: Rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleUpdateResponse'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/{rule_id}/rollback:
+    post:
+      summary: Rollback rule to previous version
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRequest'
+      responses:
+        200:
+          description: Rule rolled back successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RollbackResponse'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/evaluations:
+    post:
+      summary: Evaluate rules for loan details
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationRequest'
+      responses:
+        200:
+          description: Rule evaluation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/{rule_id}/history:
+    get:
+      summary: Get rule history
+      tags: [History]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Rule history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryResponse'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/filter:
+    get:
+      summary: Get rules with combined filters
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: tags
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, name, priority]
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        200:
+          description: Filtered rules list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/{rule_id}/history/version/{version}:
+    get:
+      summary: Get history for specific version
+      tags: [History]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Version history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryResponse'
+        404:
+          description: No history found for specified version
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/active:
+    get:
+      summary: Get active rules for a group
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        200:
+          description: List of active rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/latest:
+    get:
+      summary: Get latest version of rules
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        200:
+          description: List of latest rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/search:
+    get:
+      summary: Search rules with pagination
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        200:
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/sort/{field}/{order}:
+    get:
+      summary: Get sorted rules
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: field
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [created_at, name, priority]
+        - name: order
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [asc, desc]
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        200:
+          description: Sorted rules list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+
+  /rule-engine/api/v1/groups/{rule_group_id}/rules/tags/{tag}:
+    get:
+      summary: Get rules by tag
+      tags: [Rules]
+      parameters:
+        - name: rule_group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tag
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        200:
+          description: Rules filtered by tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesList'
+
+  /rule-engine/api/v1/groups:
+    post:
+      summary: Create a new rule group
+      description: Creates a new rule group with the specified details.
+      tags:
+        - Rule Groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - execution_type
+              properties:
+                name:
+                  type: string
+                  example: LocationRules
+                description:
+                  type: string
+                  example: Rules related to applicant location
+                execution_type:
+                  type: string
+                  example: FIRST_MATCH
+      responses:
+        '201':
+          description: Rule group created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  rule_group:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      execution_type:
+                        type: string
+                      version:
+                        type: integer
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                      updated_by:
+                        type: string
+                      created_by_tool:
+                        type: string
+                      updated_by_tool:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+        '400':
+          description: Missing required fields
+        '500':
+          description: Internal server error
+
+    get:
+      summary: Get list of rule groups
+      description: Returns a paginated list of rule groups.
+      tags:
+        - Rule Groups
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of rule groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  total:
+                    type: integer
+                  rule_groups:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        execution_type:
+                          type: string
+                        version:
+                          type: integer
+                        is_active:
+                          type: boolean
+                        created_by:
+                          type: string
+                        updated_by:
+                          type: string
+                        created_by_tool:
+                          type: string
+                        updated_by_tool:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+        '500':
+          description: Internal server error
+        
+
+  /rule-engine/api/v1/fetch-path-data:
+    post:
+      summary: Fetch path data
+      tags: [Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: Path to fetch data for
+      responses:
+        200:
+          description: Path data fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    description: Fetched path data
+
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+      description: Page number for pagination
+    
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+      description: Number of items per page
+
+  schemas:
+    RuleCreate:
+      type: object
+      required:
+        - name
+        - json_rule
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        json_rule:
+          type: object
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parameter'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        evaluated_by:
+          type: string
+
+    RuleUpdate:
+      type: object
+      required:
+        - evaluated_by
+      properties:
+        json_rule:
+          type: object
+        description:
+          type: string
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        evaluated_by:
+          type: string
+
+    Parameter:
+      type: object
+      properties:
+        name:
+          type: string
+        data_type:
+          type: string
+          enum: [STRING, INT, FLOAT, BOOLEAN, DATE]
+        description:
+          type: string
+        is_required:
+          type: boolean
+        default_value:
+          type: string
+
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    RuleCreateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        rule:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            version:
+              type: integer
+
+    RuleUpdateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        rule:
+          $ref: '#/components/schemas/Rule'
+        updated_fields:
+          type: array
+          items:
+            type: string
+        trace_id:
+          type: string
+        events:
+          type: object
+
+    RollbackRequest:
+      type: object
+      properties:
+        evaluated_by:
+          type: string
+          default: "0"
+        reason:
+          type: string
+          default: "Manual rollback"
+
+    RollbackResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        rolledBackTo:
+          $ref: '#/components/schemas/Rule'
+
+    EvaluationRequest:
+      type: object
+      required:
+        - loanDetails
+      properties:
+        loanDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoanDetail'
+
+    LoanDetail:
+      type: object
+      required:
+        - env
+        - loanProductId
+        - loanSubType
+        - lenderId
+      properties:
+        env:
+          type: string
+        loanProductId:
+          type: string
+        loanSubType:
+          type: string
+        lenderId:
+          type: string
+        loanAdditionalInfos:
+          type: object
+        parentLoanAdditionalInfo:
+          type: object
+        loanProductAdditionalInfo:
+          type: object
+        tags:
+          type: array
+          items:
+            type: string
+
+    EvaluationResponse:
+      type: object
+      properties:
+        evaluations:
+          type: array
+          items:
+            type: object
+            properties:
+              result:
+                type: boolean
+              rule:
+                type: string
+              action_type:
+                type: string
+              action_value:
+                type: string
+
+    HistoryResponse:
+      type: object
+      properties:
+        total_events:
+          type: integer
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id:
+                type: string
+              event_type:
+                type: string
+              rule_id:
+                type: integer
+              rule_name:
+                type: string
+              rule_group_name:
+                type: string
+              version:
+                type: integer
+              sequence_number:
+                type: integer
+              event_data:
+                type: object
+              metadata:
+                type: object
+              created_at:
+                type: string
+                format: date-time
+
+    Rule:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        json_rule:
+          type: object
+        version:
+          type: integer
+        is_active:
+          type: boolean
+        is_latest:
+          type: boolean
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parameter'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+
+    RulesList:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        version:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+
+ 
+tags:
+  - name: Rules
+    description: Rule management endpoints
+  - name: History
+    description: Rule history and event tracking endpoints
+  - name: Rule Groups
+    description: Rule group management endpoints
+
