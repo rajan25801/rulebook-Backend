@@ -6,12 +6,10 @@ This guide explains how to use the Rule Book Backend to create new rulesets, vie
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [Creating a New Ruleset](#creating-a-new-ruleset)
-3. [Viewing Active Rules](#viewing-active-rules)
-4. [Evaluating Rules](#evaluating-rules)
-5. [API Reference](#api-reference)
-6. [Examples](#examples)
-7. [FAQ](#faq)
+2. [Controllers & Endpoints](#controllers--endpoints)
+   - [Rule Controller](#rule-controller)
+3. [Example API Usage](#example-api-usage)
+4. [FAQ](#faq)
 
 ---
 
@@ -19,129 +17,119 @@ This guide explains how to use the Rule Book Backend to create new rulesets, vie
 
 The Rule Book Backend is a Node.js/Express API for managing business rules. It allows you to:
 - Define and store rulesets (collections of rules)
-- View all active rules
+- View, update, and rollback rules
 - Evaluate rulesets with input data
+- Manage rule tags and parameters
+- Fetch rule history and metadata
 
 ---
 
-## Creating a New Ruleset
+## Controllers & Endpoints
 
-A **ruleset** is a group of rules that define decision logic. You can create a ruleset using the API or via a connected UI.
+Handles all rule-related operations.
 
-### Using the API
+#### 1. Create Rule
+- **POST** `/groups/:rule_group_id/rules`
+- **Description:** Create a new rule in a rule group. Accepts rule details, parameters, and tags.
+- **Body Example:**
+  ```json
+  {
+    "name": "Age Check",
+    "description": "Check if age is above 18",
+    "json_rule": { "conditions": { "all": [{ "fact": "age", "operator": "greaterThanInclusive", "value": 18 }] } },
+    "parameters": [{ "name": "age", "data_type": "NUMBER", "is_required": true }],
+    "tags": [{ "name": "eligibility" }],
+    "created_by": "admin"
+  }
+  ```
+- **Response:** `{ "message": "Rule created successfully.", "rule_id": 1 }`
 
-**Endpoint:** `POST /rulesets`
+#### 2. Update Rule
+- **PUT** `/groups/:rule_group_id/rules/:rule_id`
+- **Description:** Update an existing rule. Supports updating rule logic, description, tags, parameters, and more.
+- **Body Example:**
+  ```json
+  {
+    "name": "Age Check Updated",
+    "json_rule": { ... },
+    "tags": [{ "name": "updated" }],
+    "parameters": [{ "name": "age", "data_type": "NUMBER" }],
+    "evaluated_by": 1
+  }
+  ```
+- **Response:** Details of the updated rule and versioning info.
 
-**Request Body Example:**
-```json
-{
-  "name": "Credit Card Eligibility",
-  "description": "Rules for checking credit card eligibility",
-  "rules": [
-    {
-      "name": "Age Check",
-      "condition": "age >= 18",
-      "parameters": ["age"]
-    },
-    {
-      "name": "Income Check",
-      "condition": "income >= 30000",
-      "parameters": ["income"]
-    }
-  ]
-}
-```
+#### 3. Rollback Rule
+- **POST** `/groups/:rule_group_id/rules/:rule_id/rollback`
+- **Description:** Rollback a rule to its previous version.
+- **Body Example:** `{ "evaluated_by": 1, "reason": "Incorrect logic" }`
+- **Response:** Details of the rollback and the restored version.
 
-**How to do it:**
-1. Use a tool like Postman or cURL to send a POST request to `/rulesets` with the above JSON.
-2. The backend will save your ruleset and return a confirmation.
+#### 4. View Rule History
+- **GET** `/groups/:rule_group_id/rules/:rule_id/history?version=2`
+- **Description:** Fetches the event history for a rule, including all changes and rollbacks.
+- **Response:** List of events with metadata.
 
-*Non-technical users can use the Rule Book UI to fill out a form and submit new rulesets without writing JSON.*
+#### 5. Evaluate Rule(s)
+- **POST** `/groups/:rule_group_id/evaluate`
+- **Description:** Evaluate rules in a group with provided input data.
+- **Body Example:**
+  ```json
+  {
+    "loanDetails": [{ "age": 25, "income": 40000 }]
+  }
+  ```
+- **Response:** Evaluation results, matched rules, and trace IDs.
 
----
+#### 6. Evaluate Rule with Dynamic Facts
+- **POST** `/evaluate/dynamic`
+- **Description:** Evaluate rules using dynamic facts (e.g., fetched from DB or API).
+- **Body Example:**
+  ```json
+  {
+    "rules": [ ... ],
+    "facts": { ... }
+  }
+  ```
+- **Response:** Events triggered by the evaluation.
 
-## Viewing Active Rules
+#### 7. Get Rules (with filtering)
+- **GET** `/groups/:rule_group_id/rules?page=1&limit=10&search=...&version=...`
+- **Description:** List rules in a group, with pagination, search, and version filtering.
+- **Response:** Paginated list of rules with parameters and tags.
 
-You can view all active rulesets and their rules.
+#### 8. Get Rule by Version
+- **GET** `/groups/:rule_group_id/rules/:rule_id/version/:version`
+- **Description:** Fetch a specific version of a rule.
+- **Response:** Rule details for the requested version.
 
-**Endpoint:** `GET /rulesets`
+#### 9. Toggle Rule (Enable/Disable)
+- **POST** `/rules/:rule_id/toggle/:enabled`
+- **Description:** Enable or disable a rule.
+- **Response:** Status message.
 
-**How to do it:**
-1. Send a GET request to `/rulesets`.
-2. The response will be a list of all rulesets, each with its rules and status.
+#### 10. Get Rule Groups
+- **GET** `/groups?page=1&limit=10&search=...`
+- **Description:** List all rule groups.
+- **Response:** Paginated list of rule groups.
 
-*In the UI, navigate to the "Active Rules" section to see all current rules.*
+#### 11. Fetch Path Data
+- **POST** `/fetch-path-data`
+- **Description:** Fetch and validate data from a fact using a JSONPath.
+- **Body Example:** `{ "factName": "loanAdditionalInfos", "path": "$.PRE_PAYMENT_ENABLED" }`
+- **Response:** Extracted data.
 
----
-
-## Evaluating Rules
-
-You can test a ruleset by evaluating it with sample data.
-
-**Endpoint:** `POST /rulesets/:id/evaluate`
-
-**Request Body Example:**
-```json
-{
-  "age": 25,
-  "income": 40000
-}
-```
-
-**How to do it:**
-1. Find the ID of the ruleset you want to evaluate (from the `/rulesets` list).
-2. Send a POST request to `/rulesets/{id}/evaluate` with your input data.
-3. The backend will return the evaluation result, showing which rules passed or failed.
-
-*In the UI, use the "Evaluate Rule" feature to select a ruleset and enter test data.*
-
----
-
-## API Reference
-
-- `POST /rulesets` — Create a new ruleset
-- `GET /rulesets` — List all rulesets
-- `GET /rulesets/:id` — Get details of a specific ruleset
-- `POST /rulesets/:id/evaluate` — Evaluate a ruleset with input data
-
----
-
-## Examples
-
-### Example: Creating a Ruleset (cURL)
-```bash
-curl -X POST http://localhost:3000/rulesets \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "name": "Credit Card Eligibility",
-    "description": "Rules for checking credit card eligibility",
-    "rules": [
-      {"name": "Age Check", "condition": "age >= 18", "parameters": ["age"]},
-      {"name": "Income Check", "condition": "income >= 30000", "parameters": ["income"]}
-    ]
-  }'
-```
-
-### Example: Evaluating a Ruleset (cURL)
-```bash
-curl -X POST http://localhost:3000/rulesets/{id}/evaluate \
-  -H 'Content-Type: application/json' \
-  -d '{"age": 25, "income": 40000}'
-```
+#### 12. Get Fact Names for Group
+- **GET** `/groups/:rule_group_id/fact-names`
+- **Description:** Get all unique fact names (parameter names) for a rule group.
+- **Response:** List of fact names.
 
 ---
 
-## FAQ
 
-**Q: Do I need to know programming to use the backend?**
-A: No. You can use the Rule Book UI for all actions. The API is for advanced/technical users.
+## Example API Usage
 
-**Q: Can I edit or delete rules?**
-A: Yes. Use the appropriate API endpoints or the UI.
-
-**Q: How do I know if my rules are working?**
-A: Use the evaluation endpoint or the UI's "Evaluate Rule" feature to test with sample data.
+See the "Examples" section in the README for cURL commands and sample requests.
 
 ---
 
-For more help, contact your technical team or check the project documentation.
