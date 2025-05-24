@@ -1,6 +1,6 @@
 # Rule Book Backend: End-to-End Guide
 
-This guide explains how to use the Rule Book Backend to create new rulesets, view active rules, and evaluate rules. It is written for both technical and non-technical users.
+This guide explains how to use the Rule Book.
 
 ---
 
