@@ -13,7 +13,7 @@ async function projectMiddleware(req, res, next) {
   }
 
   const { rows } = await db.query(
-    `SELECT id,name FROM rule_groups WHERE id=$1 AND is_active=TRUE`,
+    'SELECT id,name FROM rule_groups WHERE id=$1 AND is_active=TRUE',
     [groupId]
   );
   if (!rows.length) {
