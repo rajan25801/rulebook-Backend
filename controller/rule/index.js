@@ -1,21 +1,23 @@
-export { approveRule } from './approveRule.js';
-export { createRule } from './createRule.js';
-export { evaluateRule } from './evaluateRule.js';
-export { evaluateRuleWithDynamicFacts } from './evaluateRuleWithDynamicFacts.js';
-export { fetchPathData } from './fetchPathData.js';
-export { getAllApprovedRules } from './getAllApprovedRules.js';
-export { getAllPendingRules } from './getAllPendingRules.js';
-export { getApprovedRules } from './getApprovedRules.js';
-export { getFactNamesForGroup } from './getFactNamesForGroup.js';
-export { getPendingRules } from './getPendingRules.js';
-export { getRuleByVersion } from './getRuleByVersion.js';
-export { getRuleGroups } from './getRuleGroups.js';
-export { getRules } from './getRules.js';
-export { rejectRule } from './rejectRule.js';
-export { rollbackRule } from './rollbackRule.js';
-export { saveDraftRule } from './saveDraftRule.js';
-export { storeRuleEvent } from './storeRuleEvent.js';
-export { toggleRule } from './toggleRule.js';
-export { updateRule } from './updateRule.js';
-export { viewHistory } from './viewHistory.js';
-export { evaluateRulePending } from './evaluateRulePending.js';
+module.exports = {
+  approveRule: require('./approveRule.js').approveRule,
+  createRule: require('./createRule.js').createRule,
+  evaluateRule: require('./evaluateRule.js').evaluateRule,
+  evaluateRuleWithDynamicFacts: require('./evaluateRuleWithDynamicFacts.js').evaluateRuleWithDynamicFacts,
+  fetchPathData: require('./fetchPathData.js').fetchPathData,
+  getAllApprovedRules: require('./getAllApprovedRules.js').getAllApprovedRules,
+  getAllPendingRules: require('./getAllPendingRules.js').getAllPendingRules,
+  getApprovedRules: require('./getApprovedRules.js').getApprovedRules,
+  getFactNamesForGroup: require('./getFactNamesForGroup.js').getFactNamesForGroup,
+  getPendingRules: require('./getPendingRules.js').getPendingRules,
+  getRuleByVersion: require('./getRuleByVersion.js').getRuleByVersion,
+  getRuleGroups: require('./getRuleGroups.js').getRuleGroups,
+  getRules: require('./getRules.js').getRules,
+  rejectRule: require('./rejectRule.js').rejectRule,
+  rollbackRule: require('./rollbackRule.js').rollbackRule,
+  saveDraftRule: require('./saveDraftRule.js').saveDraftRule,
+  storeRuleEvent: require('./storeRuleEvent.js').storeRuleEvent,
+  toggleRule: require('./toggleRule.js').toggleRule,
+  updateRule: require('./updateRule.js').updateRule,
+  viewHistory: require('./viewHistory.js').viewHistory,
+  evaluateRulePending: require('./evaluateRulePending.js').evaluateRulePending,
+};
