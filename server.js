@@ -28,7 +28,8 @@ const {
   storeRuleEvent,
   toggleRule,
   updateRule,
-  viewHistory
+  viewHistory,
+  evaluateRulePending
 } = require('./controller/rule');
 
 dotenv.config();
@@ -50,6 +51,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.put('/rule-engine/api/v1/groups/:rule_group_id/rules/:rule_id/update',projectMiddleware, updateRule);
 app.post('/rule-engine/api/v1/groups/:rule_group_id/rules/:rule_id/rollback', projectMiddleware, rollbackRule);
 app.post('/rule-engine/api/v1/groups/:rule_group_id/evaluations',  projectMiddleware, evaluateRule);
+app.post('/rule-engine/api/v1/groups/:rule_group_id/evaluationPendingRules',  projectMiddleware, evaluateRulePending);
+
 // app.post('/rule-engine/api/v1/groups/:rule_group_id/evaluate', projectMiddleware, evaluateRuleWithDynamicFacts);
 
 

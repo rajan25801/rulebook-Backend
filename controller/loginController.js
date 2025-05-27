@@ -7,7 +7,7 @@ const users = [
 ];
 
 exports.login = (req, res) => {
-  console.log("Login request body:", req.body); // Debug log
+  console.log('Login request body:', req.body); // Debug log
   if (!req.body || !req.body.username || !req.body.password) {
     return res.status(400).json({ message: 'Username and password are required.' });
   }

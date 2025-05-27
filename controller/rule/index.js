@@ -18,3 +18,4 @@ export { storeRuleEvent } from './storeRuleEvent.js';
 export { toggleRule } from './toggleRule.js';
 export { updateRule } from './updateRule.js';
 export { viewHistory } from './viewHistory.js';
+export { evaluateRulePending } from './evaluateRulePending.js';
