@@ -3,20 +3,20 @@ const pool = require('../../db');
 async function saveDraftRule(req, res) {
   let client;
   try {
-    const { rule_group_id } = req.params;
-    const { draft_id, name, description, json_rule, event, parameters, tags } = req.body;
+    const { rule_group_id, draft_id } = req.params;
+    const { name, description, json_rule, event, parameters, tags } = req.body;
 
     if (!name || !json_rule) {
       return res.status(400).json({ message: 'Name and JSON rule are required.' });
     }
+
     if (req.user.role !== 'maker') {
       return res.status(403).json({ message: 'Only Makers can save drafts.' });
     }
 
-    // 👇 Merge full rule object before saving
     const fullRuleObject = {
-      ...json_rule,           // contains 'conditions'
-      event: event || {},     // add event if provided
+      ...json_rule,
+      event: event || {},
       parameters: parameters || [],
       tags: tags || []
     };
@@ -35,14 +35,20 @@ async function saveDraftRule(req, res) {
         WHERE id = $6
         RETURNING id
       `;
-      const updateDraftValues = [rule_group_id, name, description || null, JSON.stringify(fullRuleObject), req.user.username, draftIdToUse];
+      const updateDraftValues = [
+        rule_group_id,
+        name,
+        description || null,
+        JSON.stringify(fullRuleObject),
+        req.user.username,
+        draftIdToUse
+      ];
       const updateResult = await client.query(updateDraftQuery, updateDraftValues);
 
       if (updateResult.rowCount === 0) {
         throw new Error('Draft not found for update');
       }
 
-      // Delete old parameter & tag mappings
       await client.query('DELETE FROM rule_parameter_draft_map WHERE rule_draft_id = $1', [draftIdToUse]);
       await client.query('DELETE FROM rule_tag_draft_map WHERE rule_draft_id = $1', [draftIdToUse]);
     } else {

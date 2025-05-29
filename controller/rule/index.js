@@ -1,6 +1,6 @@
 module.exports = {
   approveRule: require('./approveRule.js').approveRule,
-  createRule: require('./createRule.js').createRule,
+  createRuleDraft: require('./createRuleDraft.js').createRuleDraft,
   evaluateRule: require('./evaluateRule.js').evaluateRule,
   evaluateRuleWithDynamicFacts: require('./evaluateRuleWithDynamicFacts.js').evaluateRuleWithDynamicFacts,
   fetchPathData: require('./fetchPathData.js').fetchPathData,
@@ -20,4 +20,6 @@ module.exports = {
   updateRule: require('./updateRule.js').updateRule,
   viewHistory: require('./viewHistory.js').viewHistory,
   evaluateRulePending: require('./evaluateRulePending.js').evaluateRulePending,
+  getDraftRuleById: require('./getDraftRuleById.js').getDraftRuleById,
+  getDraftsByGroup: require('./RuleDraftController.js').getDraftsByGroup
 };

@@ -1,6 +1,6 @@
 const pool = require('../../db');
 
-async function createRule(req, res) {
+async function createRuleDraft(req, res) {
   let client;
   try {
     const { draft_id } = req.params;
@@ -28,7 +28,34 @@ async function createRule(req, res) {
 
     const draftRule = draftResult.rows[0];
 
-    // Insert new rule
+    // Parse the draft's JSON rule
+    let draftJsonRule = draftRule.json_rule;
+    if (typeof draftJsonRule === 'string') {
+      draftJsonRule = JSON.parse(draftJsonRule);
+    }
+
+    // Extract the actual rule from the decisions array (first decision contains the rule)
+    let cleanJsonRule;
+    
+    if (draftJsonRule.decisions && draftJsonRule.decisions.length > 0) {
+      // Extract the rule from the first decision
+      const firstDecision = draftJsonRule.decisions[0];
+      cleanJsonRule = {
+        conditions: firstDecision.conditions || {},
+        event: firstDecision.event || {},
+        // Extract any additional metadata if needed
+        priority: firstDecision.priority || 1
+      };
+    } else {
+      // Fallback: assume it's already in the correct format
+      cleanJsonRule = {
+        conditions: draftJsonRule.conditions || {},
+        event: draftJsonRule.event || {},
+        priority: draftJsonRule.priority || 1
+      };
+    }
+
+    // Insert new rule with clean JSON structure
     const insertRuleQuery = `
       INSERT INTO rules 
       (rule_group_id, name, description, json_rule, status, created_by, updated_by, created_at, updated_at)
@@ -39,7 +66,7 @@ async function createRule(req, res) {
       draftRule.rule_group_id,
       draftRule.name,
       draftRule.description,
-      draftRule.json_rule,
+      JSON.stringify(cleanJsonRule), // Use clean rule structure
       req.user.username
     ];
     const ruleInsertResult = await client.query(insertRuleQuery, insertRuleValues);
@@ -157,4 +184,4 @@ async function createRule(req, res) {
   }
 }
 
-module.exports = { createRule };
+module.exports = { createRuleDraft };

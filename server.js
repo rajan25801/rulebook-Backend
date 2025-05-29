@@ -10,7 +10,7 @@ const { authMiddleware } = require('./middlewares/authMiddleware');
 const swaggerDocument = YAML.load('./swagger.yaml');
 const {
   approveRule,
-  createRule,
+  createRuleDraft,
   evaluateRule,
   evaluateRuleWithDynamicFacts,
   fetchPathData,
@@ -29,7 +29,9 @@ const {
   toggleRule,
   updateRule,
   viewHistory,
-  evaluateRulePending
+  evaluateRulePending,
+  getDraftRuleById,
+  getDraftsByGroup
 } = require('./controller/rule');
 
 dotenv.config();
@@ -38,7 +40,7 @@ const app = express();
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3003', 'http://localhost:3008'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -105,10 +107,13 @@ app.get('/rule-engine/api/v1/groups/:rule_group_id/rules/approved', authMiddlewa
 
 
 //draft routes
-app.post('/rule-engine/api/v1/groups/:rule_group_id/drafts', projectMiddleware, saveDraftRule);
-app.put('/rule-engine/api/v1/groups/:rule_group_id/drafts/:draft_id', projectMiddleware, saveDraftRule);
+app.post('/rule-engine/api/v1/groups/:rule_group_id/drafts', authMiddleware, projectMiddleware, saveDraftRule);
+app.get('/rule-engine/api/v1/groups/:rule_group_id/drafts/:draft_id', authMiddleware, projectMiddleware, getDraftRuleById);
 
-app.post('/rule-engine/api/v1/groups/:rule_group_id/submit/:draft_id',createRule);
+app.post('/rule-engine/api/v1/groups/:rule_group_id/submit/:draft_id', authMiddleware, createRuleDraft);
+app.put('/rule-engine/api/v1/groups/:rule_group_id/drafts/:draft_id', authMiddleware, saveDraftRule);
+app.get('/rule-engine/api/v1/groups/:rule_group_id/drafts', authMiddleware, getDraftsByGroup);
+
 const PORT = process.env.PORT || 3002;
 app.listen(PORT,() => {
   console.log(`Server running at ${PORT}`);
